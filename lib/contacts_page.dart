@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'assets/contact_service.dart';
+import 'services/contact_service.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
