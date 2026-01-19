@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/emergency_service.dart';
+import 'services/location_service.dart';
 
 class SosPage extends StatefulWidget {
   const SosPage({super.key});
@@ -12,13 +13,28 @@ class _SosPageState extends State<SosPage> {
   bool _sending = false;
 
   Future<void> _sendSOS() async {
+    if (!mounted) return;
+
     setState(() => _sending = true);
 
-    await EmergencyService().sendEmergency();
+    try {
+      final location = await LocationService().getCurrentLocation();
+      await EmergencyService()
+          .sendEmergency(location.latitude, location.longitude);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+      setState(() => _sending = false);
+      return;
+    }
 
     if (!mounted) return;
     setState(() => _sending = false);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('🚨 SOS Sent Successfully')),
     );
