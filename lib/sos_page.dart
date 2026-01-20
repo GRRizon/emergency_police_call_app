@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:vibration/vibration.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class SosPage extends StatefulWidget {
   const SosPage({super.key});
@@ -9,36 +12,54 @@ class SosPage extends StatefulWidget {
 }
 
 class _SosPageState extends State<SosPage> {
-  bool _isSending = true;
   final supabase = Supabase.instance.client;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isProcessing = true;
+  String _statusMessage = "INITIATING PROTOCOL...";
 
   @override
   void initState() {
     super.initState();
-    _sendEmergencyAlert();
+    _startEmergencyProtocol();
   }
 
-  Future<void> _sendEmergencyAlert() async {
-    try {
-      final user = supabase.auth.currentUser;
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    Vibration.cancel();
+    super.dispose();
+  }
 
-      // Sending data to a table named 'alerts' (Make sure this exists in Supabase!)
+  Future<void> _startEmergencyProtocol() async {
+    try {
+      if (await Vibration.hasVibrator() ?? false) {
+        Vibration.vibrate(pattern: [500, 1000, 500, 1000], repeat: 0);
+      }
+      await _audioPlayer.play(AssetSource('alarm.mp3'));
+
+      Position pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      final user = supabase.auth.currentUser;
       await supabase.from('alerts').insert({
         'user_id': user?.id,
-        'status': 'pending',
-        'message': 'Emergency SOS Triggered',
-        'latitude': 23.8103, // Placeholder: Use geolocator package for real GPS
-        'longitude': 90.4125,
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
+        'status': 'ACTIVE_DISTRESS',
       });
 
       if (mounted) {
-        setState(() => _isSending = false);
+        setState(() {
+          _isProcessing = false;
+          _statusMessage = "POLICE ALERTED - GPS ACTIVE";
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to notify police: $e")),
-        );
+        setState(() {
+          _isProcessing = false;
+          _statusMessage = "SYSTEM ERROR";
+        });
       }
     }
   }
@@ -46,45 +67,33 @@ class _SosPageState extends State<SosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red[900],
-      body: Center(
+      backgroundColor: Colors.black,
+      body: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Colors.red.withValues(alpha: 0.5), Colors.black],
+            radius: 0.8,
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.emergency_share, size: 100, color: Colors.white),
-            const SizedBox(height: 30),
-            Text(
-              _isSending ? "SENDING ALERT..." : "POLICE NOTIFIED",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                "Your location has been sent to the nearest control room. Stay where you are.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-            ),
+            const Icon(Icons.warning_rounded, size: 100, color: Colors.red),
+            const SizedBox(height: 20),
+            Text(_statusMessage,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 50),
-            if (_isSending)
-              const CircularProgressIndicator(color: Colors.white)
+            if (_isProcessing)
+              const CircularProgressIndicator(color: Colors.red)
             else
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-                label: const Text("CANCEL ALERT"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.red[900],
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                ),
-              ),
+                child: const Text("STOP & DISMISS"),
+              )
           ],
         ),
       ),
