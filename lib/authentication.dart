@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_page.dart';
+import 'navigation_service.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -18,135 +19,106 @@ class _AuthPageState extends State<AuthPage> {
       TextEditingController(text: '12345678');
   bool isLoading = false;
 
-  /// Login function
   Future<void> login() async {
     setState(() => isLoading = true);
-
     try {
-      final response = await supabase.auth.signInWithPassword(
+      await supabase.auth.signInWithPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-
-      // ✅ Check if widget is still mounted
-      if (!mounted) return;
-
-      if (response.user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Login failed!")));
-      }
+      NavigationService.navigateTo(const HomePage(), replace: true);
     } on AuthException catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Login error: ${e.message}")));
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Unexpected error: $e")));
+      NavigationService.showSnackBar(e.message, isError: true);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
-  /// Sign-up function
   Future<void> signUp() async {
     setState(() => isLoading = true);
-
     try {
-      final response = await supabase.auth.signUp(
+      await supabase.auth.signUp(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-
-      if (!mounted) return;
-
-      if (response.user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Sign-up successful! Please login.")),
-        );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Sign-up failed!")));
-      }
+      NavigationService.showSnackBar("Success! Check email or try logging in.");
     } on AuthException catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Sign-up error: ${e.message}")));
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Unexpected error: $e")));
+      NavigationService.showSnackBar(e.message, isError: true);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
-  }
-
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login / Sign-up")),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Password",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              isLoading
-                  ? const CircularProgressIndicator()
-                  : Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: login,
-                          child: const Text("Login"),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: signUp,
-                          child: const Text("Sign-up"),
-                        ),
-                      ],
-                    ),
-            ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            colors: [Colors.red[800]!, Colors.red[400]!],
           ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 80),
+            const Icon(Icons.security, size: 80, color: Colors.white),
+            const Text(
+              "EMERGENCY APP",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.all(30),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40)),
+              ),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                        labelText: "Email", prefixIcon: Icon(Icons.email)),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                        labelText: "Password", prefixIcon: Icon(Icons.lock)),
+                  ),
+                  const SizedBox(height: 30),
+                  isLoading
+                      ? const CircularProgressIndicator()
+                      : Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                                child: const Text("LOGIN"),
+                              ),
+                            ),
+                            TextButton(
+                                onPressed: signUp,
+                                child: const Text("Create Account")),
+                          ],
+                        ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

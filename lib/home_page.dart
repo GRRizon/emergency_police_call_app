@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'sos_page.dart';
 import 'authentication.dart';
+import 'navigation_service.dart';
+import 'profile_page.dart';
+import 'settings_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final supabase = Supabase.instance.client;
@@ -15,90 +18,145 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isLoading = false;
 
-  /// Logout safely
   Future<void> logout() async {
     setState(() => isLoading = true);
-
     try {
       await supabase.auth.signOut();
-
-      // ✅ Async-safe navigation
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AuthPage()),
-      );
+      NavigationService.navigateTo(const AuthPage(), replace: true);
     } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error logging out: $e")));
+      NavigationService.showSnackBar("Error logging out: $e", isError: true);
     } finally {
-      // ✅ Only cleanup, no return
       if (mounted) setState(() => isLoading = false);
     }
-  }
-
-  /// Navigate to SOS page safely
-  Future<void> openSosPage() async {
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    ); // simulate async work
-
-    // ✅ Early return if disposed
-    if (!mounted) return;
-
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const SosPage()));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Home Page"),
-        backgroundColor: Colors.blue,
+        title: const Text(
+          "Emergency Police Call App",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        centerTitle: true,
         actions: [
           isLoading
               ? const Padding(
                   padding: EdgeInsets.all(12.0),
-                  child: CircularProgressIndicator(color: Colors.white),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : IconButton(icon: const Icon(Icons.logout), onPressed: logout),
+              : IconButton(
+                  onPressed: logout, icon: const Icon(Icons.logout_rounded)),
         ],
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.warning),
-              label: const Text("Open SOS"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 20,
-                  horizontal: 40,
+            const SizedBox(height: 40),
+            const Text(
+              "Are you in an emergency?",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text("Press and hold the button for 3 seconds"),
+            const Spacer(),
+
+            // Massive SOS Button with "Pulse" Shadow
+            GestureDetector(
+              onLongPress: () => NavigationService.navigateTo(const SosPage()),
+              child: Container(
+                height: 250,
+                width: 250,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withAlpha(80),
+                      spreadRadius: 20,
+                      blurRadius: 40,
+                    ),
+                  ],
                 ),
-                textStyle: const TextStyle(fontSize: 20),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.warning_rounded, size: 100, color: Colors.white),
+                    Text(
+                      "SOS",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              onPressed: openSosPage,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.person),
-              label: const Text("Profile / Settings"),
-              onPressed: () async {
-                await Future.delayed(const Duration(seconds: 1));
 
-                if (!mounted) return;
+            const Spacer(),
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Profile clicked")),
-                );
-              },
+            // Navigation Cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildNavCard(
+                    icon: Icons.account_circle_rounded,
+                    label: "Profile",
+                    color: Colors.indigo,
+                    onTap: () =>
+                        NavigationService.navigateTo(const ProfilePage()),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildNavCard(
+                    icon: Icons.settings_suggest_rounded,
+                    label: "Settings",
+                    color: Colors.blueGrey,
+                    onTap: () =>
+                        NavigationService.navigateTo(const SettingsPage()),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavCard(
+      {required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withAlpha(15),
+                blurRadius: 15,
+                offset: const Offset(0, 8))
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 36),
+            const SizedBox(height: 10),
+            Text(label,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
       ),

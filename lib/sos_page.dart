@@ -18,6 +18,7 @@ class _SosPageState extends State<SosPage> {
     setState(() => _sending = true);
 
     try {
+<<<<<<< HEAD
       final location = await LocationService().getCurrentLocation();
       await EmergencyService()
           .sendEmergency(location.latitude, location.longitude);
@@ -30,14 +31,40 @@ class _SosPageState extends State<SosPage> {
       setState(() => _sending = false);
       return;
     }
+=======
+      // FIX: Removed quotes to pass doubles instead of Strings
+      // In a real app, replace these with actual GPS coordinates
+      double mockLat = 12.9716;
+      double mockLng = 77.5946;
+>>>>>>> 12923ca (Your descriptive message here)
 
-    if (!mounted) return;
-    setState(() => _sending = false);
+      await EmergencyService().sendEmergency(mockLat, mockLng);
 
+<<<<<<< HEAD
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('🚨 SOS Sent Successfully')),
     );
+=======
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🚨 SOS Sent Successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Failed to send SOS: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+>>>>>>> 12923ca (Your descriptive message here)
   }
 
   @override
@@ -49,7 +76,8 @@ class _SosPageState extends State<SosPage> {
           ClipPath(
             clipper: SemiCircleClipper(),
             child: GestureDetector(
-              onLongPress: _sendSOS,
+              onLongPress:
+                  _sending ? null : _sendSOS, // Disable if already sending
               child: Container(
                 height: 200,
                 width: double.infinity,
