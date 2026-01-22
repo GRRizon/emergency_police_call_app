@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  google_maps_flutter: ^2.6.1
+  google_maps_flutter_android: ^2.8.0
+  google_maps_flutter_ios: ^2.8.0
 
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.3.4
