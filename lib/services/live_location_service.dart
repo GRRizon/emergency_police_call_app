@@ -9,7 +9,8 @@ class LiveLocationService {
   void startLiveTracking() {
     _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
       await EmergencyService().updateLocation(pos.latitude, pos.longitude);
     });

@@ -13,11 +13,79 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  final TextEditingController emailController =
-      TextEditingController(text: '75golamrabbani@gmail.com');
-  final TextEditingController passwordController =
-      TextEditingController(text: '12345678');
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  String selectedRole = 'citizen';
+
+  // Credentials for different roles
+  final Map<String, Map<String, String>> credentials = {
+    'citizen': {
+      'emails': '75golamrabbani@gmail.com or 75citizen@gmail.com',
+      'primaryEmail': '75golamrabbani@gmail.com or 75citizen@gmail.com',
+      'password': '12345678',
+    },
+    'police': {
+      'emails': '75police@gmail.com',
+      'primaryEmail': '75police@gmail.com',
+      'password': '123456',
+    },
+    'admin': {
+      'emails': '75admin@gmail.com',
+      'primaryEmail': '75admin@gmail.com',
+      'password': '1234',
+    },
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCredentials('citizen');
+  }
+
+  void _updateCredentials(String role) {
+    setState(() {
+      selectedRole = role;
+      final creds = credentials[role]!;
+      emailController.text = creds['primaryEmail']!;
+      passwordController.text = creds['password']!;
+    });
+  }
+
+  Widget _buildRoleButton(String roleValue, String roleLabel, IconData icon) {
+    final isSelected = selectedRole == roleValue;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _updateCredentials(roleValue),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.red : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.red,
+                size: 28,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                roleLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> login() async {
     setState(() => isLoading = true);
@@ -81,6 +149,62 @@ class _AuthPageState extends State<AuthPage> {
               ),
               child: Column(
                 children: [
+                  const Text(
+                    "Select User Role",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red, width: 2),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildRoleButton('citizen', 'Citizen', Icons.person),
+                        _buildRoleButton(
+                            'police', 'Police', Icons.local_police),
+                        _buildRoleButton(
+                            'admin', 'Admin', Icons.admin_panel_settings),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red[200]!, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Available Credentials:",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[800],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          credentials[selectedRole]!['emails']!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.red[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: emailController,
                     decoration: const InputDecoration(

@@ -1,11 +1,12 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:vibration/vibration.dart';
 
 class AlertService {
   final _player = AudioPlayer();
 
   Future<void> startAlert() async {
-    if (await Vibration.hasVibrator() ?? false) {
+    if (!kIsWeb && await Vibration.hasVibrator()) {
       Vibration.vibrate(pattern: [0, 500, 500, 500], repeat: 1);
     }
 
@@ -13,7 +14,9 @@ class AlertService {
   }
 
   Future<void> stopAlert() async {
-    Vibration.cancel();
+    if (!kIsWeb) {
+      Vibration.cancel();
+    }
     await _player.stop();
   }
 }

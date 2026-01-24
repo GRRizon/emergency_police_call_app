@@ -1,101 +1,50 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 
-class MapPage extends StatefulWidget {
-  const MapPage({super.key});
+class MapPage extends StatelessWidget {
+  final double latitude;
+  final double longitude;
 
-  @override
-  State<MapPage> createState() => _MapPageState();
-}
-
-class _MapPageState extends State<MapPage> {
-  final Completer<GoogleMapController> _controller = Completer();
-
-  // Default location (Bangladesh) if GPS fails initially
-  LatLng _currentP = const LatLng(23.8103, 90.4125);
-  bool _isLoading = true;
-  StreamSubscription<Position>? _positionSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _initLocationTracking();
-  }
-
-  @override
-  void dispose() {
-    _positionSubscription?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _initLocationTracking() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
-    }
-
-    // Get current location
-    Position position = await Geolocator.getCurrentPosition();
-    if (mounted) {
-      setState(() {
-        _currentP = LatLng(position.latitude, position.longitude);
-        _isLoading = false;
-      });
-    }
-
-    // Update map as user moves
-    _positionSubscription = Geolocator.getPositionStream(
-            locationSettings:
-                const LocationSettings(accuracy: LocationAccuracy.high))
-        .listen((Position pos) async {
-      final GoogleMapController controller = await _controller.future;
-      LatLng newLatLng = LatLng(pos.latitude, pos.longitude);
-
-      controller.animateCamera(CameraUpdate.newLatLng(newLatLng));
-
-      if (mounted) {
-        setState(() => _currentP = newLatLng);
-      }
-    });
-  }
+  const MapPage({
+    super.key,
+    this.latitude = 23.8103, // Default: Dhaka
+    this.longitude = 90.4125,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("LIVE EMERGENCY MAP"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.red))
-          : GoogleMap(
-              initialCameraPosition:
-                  CameraPosition(target: _currentP, zoom: 15),
-              onMapCreated: (GoogleMapController controller) {
-                _controller.complete(controller);
-              },
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              markers: {
-                Marker(
-                  markerId: const MarkerId("_currentLocation"),
-                  position: _currentP,
-                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueRed),
+      appBar: AppBar(title: const Text("Live Location")),
+      body: Center(
+        child: Card(
+          elevation: 6,
+          margin: const EdgeInsets.all(24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.location_on, color: Colors.red, size: 80),
+                const SizedBox(height: 16),
+                const Text(
+                  "User Live Location",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-              },
+                const SizedBox(height: 16),
+                Text("Latitude: $latitude"),
+                Text("Longitude: $longitude"),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.close),
+                  label: const Text("Close"),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 }

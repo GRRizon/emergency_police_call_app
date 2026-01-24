@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'sos_page.dart';
 import 'contacts_page.dart';
 import 'map_page.dart';
@@ -19,14 +20,6 @@ class HomePage extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.black),
-            onPressed: () {
-              // Navigation to Profile can be added here
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -41,7 +34,7 @@ class HomePage extends StatelessWidget {
           ),
           const Spacer(),
 
-          // Single Tap Emergency Trigger
+          /// SOS Button
           GestureDetector(
             onTap: () => NavigationService.navigateTo(const SosPage()),
             child: Container(
@@ -52,7 +45,6 @@ class HomePage extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    // Using .withValues for Flutter 3.27+ compatibility
                     color: Colors.red.withValues(alpha: 0.2),
                     spreadRadius: 30,
                     blurRadius: 60,
@@ -70,18 +62,14 @@ class HomePage extends StatelessWidget {
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.notifications_active,
-                        size: 50,
-                        color: Colors.white,
-                      ),
+                      Icon(Icons.notifications_active,
+                          size: 50, color: Colors.white),
                       Text(
                         "SOS",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 65,
-                          fontWeight:
-                              FontWeight.w900, // Replaced FontWeight.black
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
@@ -93,14 +81,12 @@ class HomePage extends StatelessWidget {
 
           const Spacer(),
 
-          // Navigation Section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
             child: Row(
               children: [
                 Expanded(
                   child: _buildNavButton(
-                    context,
                     icon: Icons.people_alt,
                     label: "Contacts",
                     onTap: () =>
@@ -110,7 +96,6 @@ class HomePage extends StatelessWidget {
                 const SizedBox(width: 20),
                 Expanded(
                   child: _buildNavButton(
-                    context,
                     icon: Icons.map,
                     label: "Live Map",
                     onTap: () => NavigationService.navigateTo(const MapPage()),
@@ -124,9 +109,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // Helper widget to build navigation buttons consistently
-  Widget _buildNavButton(
-    BuildContext context, {
+  Widget _buildNavButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,

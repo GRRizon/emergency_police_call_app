@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.emergency_police_call_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "26.1.10909125"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
