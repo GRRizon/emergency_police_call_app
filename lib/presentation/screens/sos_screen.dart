@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_colors.dart';
 import '../../config/app_constants.dart';
@@ -32,6 +33,31 @@ class _SOSScreenState extends ConsumerState<SOSScreen> {
   void dispose() {
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendEmergencySMS(String phoneNumber, String message) async {
+    try {
+      final Uri uri = Uri.parse("sms:$phoneNumber?body=${Uri.encodeComponent(message)}");
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        if (mounted) {
+          AppSnackBar.show(
+            context,
+            message: 'Could not open SMS app',
+            type: SnackBarType.error,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Failed to send SMS: $e',
+          type: SnackBarType.error,
+        );
+      }
+    }
   }
 
   Future<void> _loadCurrentLocation() async {
@@ -86,6 +112,20 @@ class _SOSScreenState extends ConsumerState<SOSScreen> {
         longitude: _currentLocation!.longitude,
         description: _descriptionController.text,
       );
+
+      // Create SMS message with location details
+      final smsMessage = '''🚨 EMERGENCY ALERT 🚨
+${currentUser.name} needs help!
+
+Location: ${_currentLocation!.latitude.toStringAsFixed(4)}, ${_currentLocation!.longitude.toStringAsFixed(4)}
+
+Emergency: ${_descriptionController.text}
+
+Please call police immediately!''';
+
+      // Send SMS to emergency contact (police)
+      // In production, this would send to registered emergency contacts
+      await _sendEmergencySMS('911', smsMessage);
 
       if (mounted) {
         AppSnackBar.show(
